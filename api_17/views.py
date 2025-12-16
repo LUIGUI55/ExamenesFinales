@@ -1,10 +1,10 @@
 
 from django.shortcuts import render
 from django.http import JsonResponse
-from .ml_logic import predict_fraud, train_kmeans_model, evaluate_model
+from .ml_logic import predict_fraud, load_data_and_train, evaluate_model
 
 # Ensure model is trained on startup (or first request)
-train_kmeans_model()
+load_data_and_train()
 
 def index(request):
     """Renders the main page for K-Means App with Metrics."""
