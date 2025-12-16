@@ -1,6 +1,4 @@
 
 django
-scikit-learn
-pandas
 numpy
 whitenoise

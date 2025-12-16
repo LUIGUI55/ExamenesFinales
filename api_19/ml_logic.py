@@ -1,28 +1,61 @@
 
-import numpy as np
 import string
-import nltk
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
+import math
+from collections import defaultdict
 
-# Ensure NLTK data (if possible, or skip stemming for simple demo)
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    # nltk.download('punkt', quiet=True) 
-    # nltk.download('stopwords', quiet=True)
-    pass 
-    # We might skip complex stemming if internet/nltk is broken in this env
-    # For a robust demo without external deps, we'll do simple split.
+# Lightweight implementation without heavy libraries like sklearn/pandas
+# to fit within Vercel's 250MB limit.
 
-class SimpleParser:
-    """ simplified parser replacing the complex one from notebook for demo purposes """
-    def parse(self, text):
-        # Remove punctuation
-        text = text.translate(str.maketrans('', '', string.punctuation))
-        return text.lower()
+class SimpleNaiveBayes:
+    def __init__(self):
+        self.spam_counts = defaultdict(int)
+        self.ham_counts = defaultdict(int)
+        self.spam_total = 0
+        self.ham_total = 0
+        self.vocab = set()
 
-# Mock training data (since trec07p is missing)
+    def train(self, data):
+        for text, label in data:
+            words = self._tokenize(text)
+            for word in words:
+                self.vocab.add(word)
+                if label == 1:
+                    self.spam_counts[word] += 1
+                    self.spam_total += 1
+                else:
+                    self.ham_counts[word] += 1
+                    self.ham_total += 1
+
+    def predict(self, text):
+        words = self._tokenize(text)
+        
+        # P(Spam) and P(Ham) priors (assume equal for now or based on counts)
+        log_prob_spam = 0.0
+        log_prob_ham = 0.0
+        
+        # Additive smoothing (Laplace)
+        vocab_size = len(self.vocab)
+        
+        for word in words:
+            # P(Word | Spam)
+            p_w_spam = (self.spam_counts[word] + 1) / (self.spam_total + vocab_size)
+            log_prob_spam += math.log(p_w_spam)
+            
+            # P(Word | Ham)
+            p_w_ham = (self.ham_counts[word] + 1) / (self.ham_total + vocab_size)
+            log_prob_ham += math.log(p_w_ham)
+        
+        # Compare
+        if log_prob_spam > log_prob_ham:
+            return 1, 1.0 # High probability
+        else:
+            return 0, 0.0 # Low probability
+
+    def _tokenize(self, text):
+        text = text.translate(str.maketrans('', '', string.punctuation)).lower()
+        return text.split()
+
+# Values from previous mock training
 TRAIN_DATA = [
     ("Win money now free cash prize", 1), # Spam
     ("Buy cheap meds viagra pills", 1),
@@ -33,42 +66,16 @@ TRAIN_DATA = [
 ]
 
 _NB_MODEL = None
-_VECTORIZER = None
 
-def train_nb_model():
-    global _NB_MODEL, _VECTORIZER
-    
-    # Prepare data
-    corpus = [text for text, label in TRAIN_DATA]
-    labels = [label for text, label in TRAIN_DATA]
-    
-    # Vectorize
-    vectorizer = CountVectorizer(stop_words='english')
-    X = vectorizer.fit_transform(corpus)
-    
-    # Train
-    model = MultinomialNB()
-    model.fit(X, labels)
-    
-    _NB_MODEL = model
-    _VECTORIZER = vectorizer
-    return model
+def get_model():
+    global _NB_MODEL
+    if _NB_MODEL is None:
+        model = SimpleNaiveBayes()
+        model.train(TRAIN_DATA)
+        _NB_MODEL = model
+    return _NB_MODEL
 
 def predict_spam(text):
-    global _NB_MODEL, _VECTORIZER
-    if _NB_MODEL is None:
-        train_nb_model()
-        
-    try:
-        # Transform input
-        X_test = _VECTORIZER.transform([text])
-        # Predict
-        prediction = _NB_MODEL.predict(X_test)[0]
-        # Probabilities
-        proba = _NB_MODEL.predict_proba(X_test)[0]
-        spam_prob = proba[1]
-        
-        return int(prediction), float(spam_prob)
-    except Exception as e:
-        print(f"Error predicting: {e}")
-        return 0, 0.0
+    model = get_model()
+    prediction, prob = model.predict(text)
+    return prediction, prob
