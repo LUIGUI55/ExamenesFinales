@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Naive Bayes Spam Detection (API 19)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #7209b7;
@@ -18,7 +19,7 @@
             font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg);
             color: #333;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 40px 20px;
         }
@@ -35,6 +36,7 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
         }
 
         textarea {
@@ -122,12 +124,40 @@
         .nav-link:hover {
             color: var(--primary);
         }
+
+        /* Metrics Section */
+        .metrics-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--secondary);
+        }
     </style>
 </head>
 
 <body>
     <a href="/" class="nav-link">← Back to Dashboard</a>
 
+    <!-- Input Card -->
     <div class="card">
         <h1>Email Content Filter (Naive Bayes)</h1>
         <p style="color: #666; margin-bottom: 20px;">
@@ -151,6 +181,70 @@
             <p id="detailsText" style="text-align: center; color: #666;"></p>
         </div>
     </div>
+
+    <!-- Metrics Card -->
+    {% if metrics %}
+    <div class="card">
+        <h2>📊 Model Ingestion Metrics</h2>
+        <p>Evaluated on <strong>{{ metrics.total_samples }}</strong> email samples from <code>spam_sample.csv</code>.
+        </p>
+
+        <div class="metrics-container">
+            <div>
+                <canvas id="metricsChart"></canvas>
+            </div>
+            <div>
+                <div class="stat-box">
+                    <div>Accuracy</div>
+                    <div class="stat-value">{{ metrics.accuracy }}</div>
+                </div>
+                <div class="stat-box" style="margin-top:10px">
+                    <div>F1 Score</div>
+                    <div class="stat-value">{{ metrics.f1_score }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
+            <strong>Confusion Matrix:</strong>
+            <span style="color:var(--spam)">TP (Spam)= {{ metrics.confusion_matrix.tp }}</span>,
+            <span style="color:var(--ham)">TN (Ham)= {{ metrics.confusion_matrix.tn }}</span>
+        </div>
+    </div>
+
+    <script>
+        // Render Chart
+        const ctx = document.getElementById('metricsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+                datasets: [{
+                    label: 'Performance Metrics',
+                    data: [{{ metrics.accuracy }}, {{ metrics.precision }}, {{ metrics.recall }}, {{ metrics.f1_score }}],
+            backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(153, 102, 255, 0.6)'
+        ],
+            borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(153, 102, 255, 1)'
+        ],
+            borderWidth: 1
+                }]
+            },
+            options: {
+            scales: {
+                y: { beginAtZero: true, max: 1.0 }
+            }
+        }
+        });
+    </script>
+    {% endif %}
 
     <script>
         function predict() {

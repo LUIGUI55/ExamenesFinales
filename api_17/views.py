@@ -1,14 +1,21 @@
 
 from django.shortcuts import render
 from django.http import JsonResponse
-from .ml_logic import predict_fraud, train_kmeans_model
+from .ml_logic import predict_fraud, train_kmeans_model, evaluate_model
 
 # Ensure model is trained on startup (or first request)
 train_kmeans_model()
 
 def index(request):
-    """Renders the main page for K-Means App."""
-    return render(request, 'api_17/index.html')
+    """Renders the main page for K-Means App with Metrics."""
+    try:
+        metrics = evaluate_model()
+    except Exception as e:
+        print(f"Error calculating metrics for API 17: {e}")
+        metrics = None
+        
+    context = {'metrics': metrics}
+    return render(request, 'api_17/index.html', context)
 
 def predict_api(request):
     """API endpoint to predict cluster."""

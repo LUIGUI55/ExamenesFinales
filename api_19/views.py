@@ -2,12 +2,19 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .ml_logic import predict_spam
+from .ml_logic import predict_spam, evaluate_model
 import json
 
 def index(request):
-    """Renders the main page for Spam Detection App."""
-    return render(request, 'api_19/index.html')
+    """Renders the main page for Spam Detection App with Metrics."""
+    try:
+        metrics = evaluate_model()
+    except Exception as e:
+        print(f"Error calculating metrics for API 19: {e}")
+        metrics = None
+        
+    context = {'metrics': metrics}
+    return render(request, 'api_19/index.html', context)
 
 @csrf_exempt # For simplicity in this demo, usually we use CSRF token in template
 def predict_api(request):

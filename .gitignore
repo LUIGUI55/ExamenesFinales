@@ -3,25 +3,20 @@
 __pycache__/
 *.py[cod]
 *$py.class
+venv/
+.venv/
+env/
 
 # Django
 *.log
 local_settings.py
 db.sqlite3
-db.sqlite3-journal
+media
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDEs
+# VS Code
 .vscode/
-.idea/
 
-# Static
-staticfiles/
+# Heavy Datasets (Too big for Vercel/Git)
+datasets/
+!datasets/creditcard_sample.csv
+!datasets/spam_sample.csv

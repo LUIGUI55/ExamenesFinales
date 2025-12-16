@@ -1,11 +1,18 @@
 
 from django.shortcuts import render
 from django.http import JsonResponse
-from .ml_logic import predict_fraud_dbscan
+from .ml_logic import predict_fraud_dbscan, evaluate_model
 
 def index(request):
-    """Renders the main page for DBSCAN App."""
-    return render(request, 'api_18/index.html')
+    """Renders the main page for DBSCAN App with Metrics."""
+    try:
+        metrics = evaluate_model()
+    except Exception as e:
+        print(f"Error calclating metrics for API 18: {e}")
+        metrics = None
+        
+    context = {'metrics': metrics}
+    return render(request, 'api_18/index.html', context)
 
 def predict_api(request):
     """API endpoint to predict cluster via DBSCAN."""
