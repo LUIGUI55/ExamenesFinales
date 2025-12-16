@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBSCAN Fraud Detection (API 18)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            display: none;
+        }
+
+        .cluster-noise {
+            background-color: #ffebee;
+            color: #c62828;
+            border-color: #c62828;
+        }
+
+        .cluster-normal {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-color: #2e7d32;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>DBSCAN Fraud Detection</h1>
+    <p>Enter V10 and V14 values. DBSCAN detects outliers (Noise) which may indicate fraud.</p>
+
+    <div class="form-group">
+        <label for="v10">V10:</label>
+        <input type="number" id="v10" step="any" value="0.0">
+    </div>
+
+    <div class="form-group">
+        <label for="v14">V14:</label>
+        <input type="number" id="v14" step="any" value="0.0">
+    </div>
+
+    <button onclick="predict()">Check Transaction</button>
+
+    <div id="result"></div>
+
+    <script>
+        function predict() {
+            const v10 = document.getElementById('v10').value;
+            const v14 = document.getElementById('v14').value;
+
+            fetch(`/18/predict/?v10=${v10}&v14=${v14}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resDiv = document.getElementById('result');
+                    resDiv.style.display = 'block';
+                    if (data.status === 'success') {
+                        resDiv.innerHTML = `<h3>Analysis Result</h3>
+                                            <p><strong>Cluster:</strong> ${data.cluster}</p>
+                                            <p>${data.message}</p>`;
+
+                        // Cluster -1 is noise (Fraud potential)
+                        if (data.cluster === -1) {
+                            resDiv.className = 'cluster-noise';
+                        } else {
+                            resDiv.className = 'cluster-normal';
+                        }
+                    } else {
+                        resDiv.innerHTML = `<p style="color:red">Error: ${data.message}</p>`;
+                        resDiv.className = '';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error reaching API");
+                });
+        }
+    </script>
+</body>
+
+</html>

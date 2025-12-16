@@ -1,0 +1,32 @@
+
+from django.shortcuts import render
+from django.http import JsonResponse
+from .ml_logic import predict_fraud, train_kmeans_model
+
+# Ensure model is trained on startup (or first request)
+train_kmeans_model()
+
+def index(request):
+    """Renders the main page for K-Means App."""
+    return render(request, 'api_17/index.html')
+
+def predict_api(request):
+    """API endpoint to predict cluster."""
+    if request.method == 'GET':
+        try:
+            v10 = float(request.GET.get('v10', 0))
+            v14 = float(request.GET.get('v14', 0))
+            
+            cluster = predict_fraud(v10, v14)
+            
+            return JsonResponse({
+                'status': 'success',
+                'v10': v10,
+                'v14': v14,
+                'cluster': cluster,
+                'message': f'Transaction assigned to Cluster {cluster}'
+            })
+        except ValueError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid input parameters'}, status=400)
+    
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)

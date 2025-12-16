@@ -1,0 +1,16 @@
+
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "ML_Exams/wsgi.py",
+            "use": "@vercel/python"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "ML_Exams/wsgi.py"
+        }
+    ]
+}
