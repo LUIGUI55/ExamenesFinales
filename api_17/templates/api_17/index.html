@@ -1,67 +1,193 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>K-Means Fraud Detection (API 17)</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        input[type="number"] { width: 100%; padding: 8px; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        #result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; display: none; }
-        .cluster-bad { background-color: #ffebee; color: #c62828; }
-        .cluster-good { background-color: #e8f5e9; color: #2e7d32; }
+        :root {
+            --primary: #4cc9f0;
+            --secondary: #4361ee;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid var(--primary);
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.2s;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cluster-box {
+            text-align: center;
+        }
+
+        .cluster-id {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 10px 0;
+            color: var(--secondary);
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
     </style>
 </head>
+
 <body>
-    <h1>K-Means Fraud Detection</h1>
-    <p>Enter V10 and V14 values (Features selected from PCA).</p>
-    
-    <div class="form-group">
-        <label for="v10">V10:</label>
-        <input type="number" id="v10" step="any" value="0.0">
+    <a href="/" class="nav-link">← Back to Dashboard</a>
+
+    <div class="card">
+        <h1>Transaction Analyzer (K-Means)</h1>
+        <p style="color: #666; margin-bottom: 30px;">
+            Enter the principal components (V10, V14) to classify the transaction into a behavioral cluster.
+        </p>
+
+        <div class="form-group">
+            <label for="v10">Feature V10 Value</label>
+            <input type="number" id="v10" step="any" value="0.0" placeholder="e.g. -2.5">
+        </div>
+
+        <div class="form-group">
+            <label for="v14">Feature V14 Value</label>
+            <input type="number" id="v14" step="any" value="0.0" placeholder="e.g. 1.2">
+        </div>
+
+        <button onclick="predict()">Analyze Transaction</button>
+
+        <div id="result">
+            <!-- Results will appear here -->
+        </div>
     </div>
-    
-    <div class="form-group">
-        <label for="v14">V14:</label>
-        <input type="number" id="v14" step="any" value="0.0">
-    </div>
-    
-    <button onclick="predict()">Predict Cluster</button>
-    
-    <div id="result"></div>
-    
+
     <script>
         function predict() {
             const v10 = document.getElementById('v10').value;
             const v14 = document.getElementById('v14').value;
-            
+            const btn = document.querySelector('button');
+
+            btn.innerHTML = "Analyzing...";
+            btn.disabled = true;
+
             fetch(`/17/predict/?v10=${v10}&v14=${v14}`)
                 .then(response => response.json())
                 .then(data => {
                     const resDiv = document.getElementById('result');
                     resDiv.style.display = 'block';
+                    btn.innerHTML = "Analyze Transaction";
+                    btn.disabled = false;
+
                     if (data.status === 'success') {
-                        resDiv.innerHTML = `<h3>Prediction Result</h3>
-                                            <p><strong>Cluster:</strong> ${data.cluster}</p>
-                                            <p>${data.message}</p>`;
-                        // Simple logic: Highlight arbitrary cluster as "sus" just for visual demo
-                        // In notebook, cluster indices change, but let's assume one is bad.
-                        resDiv.className = 'cluster-good'; 
+                        resDiv.style.backgroundColor = "#e7f5ff";
+                        resDiv.style.border = "1px solid #a5d8ff";
+
+                        resDiv.innerHTML = `
+                            <div class="cluster-box">
+                                <div style="font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; color: #555;">Assigned Group</div>
+                                <div class="cluster-id">Cluster ${data.cluster}</div>
+                                <p>${data.message}</p>
+                            </div>
+                        `;
                     } else {
                         resDiv.innerHTML = `<p style="color:red">Error: ${data.message}</p>`;
-                        resDiv.className = '';
                     }
                 })
                 .catch(err => {
                     console.error(err);
+                    btn.innerHTML = "Analyze Transaction";
+                    btn.disabled = false;
                     alert("Error reaching API");
                 });
         }
     </script>
 </body>
+
 </html>

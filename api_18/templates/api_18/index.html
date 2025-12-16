@@ -6,98 +6,178 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DBSCAN Fraud Detection (API 18)</title>
     <style>
+        :root {
+            --primary: #f72585;
+            --secondary: #b5179e;
+            --bg: #f8f9fa;
+            --noise: #d00000;
+            --safe: #2b9348;
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: #333;
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid var(--primary);
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
         }
 
         input[type="number"] {
             width: 100%;
-            padding: 8px;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.2s;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
         }
 
         button {
-            padding: 10px 20px;
-            background-color: #28a745;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
             border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
+            transition: transform 0.1s;
         }
 
         button:hover {
-            background-color: #218838;
+            transform: scale(1.02);
         }
 
         #result {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 8px;
             display: none;
+            text-align: center;
         }
 
-        .cluster-noise {
-            background-color: #ffebee;
-            color: #c62828;
-            border-color: #c62828;
+        .status-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+            display: block;
         }
 
-        .cluster-normal {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            border-color: #2e7d32;
+        .result-bad {
+            background-color: #fff0f3;
+            border: 2px solid var(--noise);
+            color: var(--noise);
+        }
+
+        .result-good {
+            background-color: #ebfbee;
+            border: 2px solid var(--safe);
+            color: var(--safe);
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
         }
     </style>
 </head>
 
 <body>
-    <h1>DBSCAN Fraud Detection</h1>
-    <p>Enter V10 and V14 values. DBSCAN detects outliers (Noise) which may indicate fraud.</p>
+    <a href="/" class="nav-link">← Back to Dashboard</a>
 
-    <div class="form-group">
-        <label for="v10">V10:</label>
-        <input type="number" id="v10" step="any" value="0.0">
+    <div class="card">
+        <h1>Outlier Detector (DBSCAN)</h1>
+        <p style="color: #666; margin-bottom: 30px;">
+            Identifies anomalies in transaction data. Points far from dense clusters are flagged as "Noise".
+        </p>
+
+        <div class="form-group">
+            <label for="v10">Feature V10 Value</label>
+            <input type="number" id="v10" step="any" value="0.0" placeholder="e.g. 5.5 (Outlier)">
+        </div>
+
+        <div class="form-group">
+            <label for="v14">Feature V14 Value</label>
+            <input type="number" id="v14" step="any" value="0.0">
+        </div>
+
+        <button onclick="predict()">Scan for Fraud</button>
+
+        <div id="result"></div>
     </div>
-
-    <div class="form-group">
-        <label for="v14">V14:</label>
-        <input type="number" id="v14" step="any" value="0.0">
-    </div>
-
-    <button onclick="predict()">Check Transaction</button>
-
-    <div id="result"></div>
 
     <script>
         function predict() {
             const v10 = document.getElementById('v10').value;
             const v14 = document.getElementById('v14').value;
+            const btn = document.querySelector('button');
+
+            btn.innerHTML = "Scanning...";
+            btn.disabled = true;
 
             fetch(`/18/predict/?v10=${v10}&v14=${v14}`)
                 .then(response => response.json())
                 .then(data => {
                     const resDiv = document.getElementById('result');
                     resDiv.style.display = 'block';
-                    if (data.status === 'success') {
-                        resDiv.innerHTML = `<h3>Analysis Result</h3>
-                                            <p><strong>Cluster:</strong> ${data.cluster}</p>
-                                            <p>${data.message}</p>`;
+                    btn.innerHTML = "Scan for Fraud";
+                    btn.disabled = false;
 
-                        // Cluster -1 is noise (Fraud potential)
+                    if (data.status === 'success') {
                         if (data.cluster === -1) {
-                            resDiv.className = 'cluster-noise';
+                            // Noise / Fraud
+                            resDiv.className = 'result-bad';
+                            resDiv.innerHTML = `
+                                <span class="status-icon">⚠️</span>
+                                <h2>POTENTIAL FRAUD DETECTED</h2>
+                                <p>Transaction flagged as <strong>Noise (Outlier)</strong>.</p>
+                                <p style="font-size:0.9em">Deviation detected in features.</p>
+                            `;
                         } else {
-                            resDiv.className = 'cluster-normal';
+                            // Normal
+                            resDiv.className = 'result-good';
+                            resDiv.innerHTML = `
+                                <span class="status-icon">✅</span>
+                                <h2>Legitimate Transaction</h2>
+                                <p>Assigned to typical behavior group: <strong>Cluster ${data.cluster}</strong></p>
+                            `;
                         }
                     } else {
                         resDiv.innerHTML = `<p style="color:red">Error: ${data.message}</p>`;
@@ -106,6 +186,8 @@
                 })
                 .catch(err => {
                     console.error(err);
+                    btn.innerHTML = "Scan for Fraud";
+                    btn.disabled = false;
                     alert("Error reaching API");
                 });
         }

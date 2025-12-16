@@ -6,96 +6,202 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Naive Bayes Spam Detection (API 19)</title>
     <style>
+        :root {
+            --primary: #7209b7;
+            --secondary: #3a0ca3;
+            --bg: #f8f9fa;
+            --spam: #e63946;
+            --ham: #2a9d8f;
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: #333;
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid var(--primary);
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
         }
 
         textarea {
             width: 100%;
-            height: 150px;
-            padding: 10px;
-            margin-bottom: 10px;
+            height: 180px;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 16px;
+            box-sizing: border-box;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            outline: none;
         }
 
         button {
-            padding: 10px 20px;
-            background-color: #ffc107;
-            color: black;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
             border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
 
         button:hover {
-            background-color: #e0a800;
+            opacity: 0.9;
         }
 
         #result {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
+            margin-top: 30px;
             display: none;
         }
 
-        .spam {
-            background-color: #ffebee;
-            color: #c62828;
-            border: 1px solid #c62828;
+        .progress-container {
+            background: #eee;
+            border-radius: 20px;
+            height: 30px;
+            overflow: hidden;
+            margin: 20px 0;
+            position: relative;
         }
 
-        .ham {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #2e7d32;
+        .progress-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+
+        .res-spam .progress-bar {
+            background: var(--spam);
+        }
+
+        .res-ham .progress-bar {
+            background: var(--ham);
+        }
+
+        .verdict {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
         }
     </style>
 </head>
 
 <body>
-    <h1>Naive Bayes Spam Detection</h1>
-    <p>Enter email text to classify as Spam or Ham.</p>
+    <a href="/" class="nav-link">← Back to Dashboard</a>
 
-    <textarea id="emailText" placeholder="Enter email content here... (e.g., 'Win money now')"></textarea>
-    <br>
-    <button onclick="predict()">Check Email</button>
+    <div class="card">
+        <h1>Email Content Filter (Naive Bayes)</h1>
+        <p style="color: #666; margin-bottom: 20px;">
+            Paste the body of a suspicious email below to analyze its probability of being SPAM.
+        </p>
 
-    <div id="result"></div>
+        <textarea id="emailText" placeholder="Subject: You won a prize! ..."></textarea>
+
+        <button onclick="predict()">Analyze Email Content</button>
+
+        <div id="result">
+            <div class="verdict" id="verdictText"></div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 5px;">
+                <span>Legitimate (Ham)</span>
+                <span>Spam Probability</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" id="probBar" style="width: 0%"></div>
+            </div>
+            <p id="detailsText" style="text-align: center; color: #666;"></p>
+        </div>
+    </div>
 
     <script>
         function predict() {
             const text = document.getElementById('emailText').value;
+            const btn = document.querySelector('button');
+
+            if (!text.trim()) { alert("Please enter some text."); return; }
+
+            btn.innerHTML = "Analyzing...";
+            btn.disabled = true;
 
             fetch('/19/predict/', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: text })
             })
                 .then(response => response.json())
                 .then(data => {
                     const resDiv = document.getElementById('result');
+                    const bar = document.getElementById('probBar');
+                    const verdict = document.getElementById('verdictText');
+                    const details = document.getElementById('detailsText');
+
                     resDiv.style.display = 'block';
+                    btn.innerHTML = "Analyze Email Content";
+                    btn.disabled = false;
 
                     if (data.status === 'success') {
-                        resDiv.innerHTML = `<h3>Classification Result</h3>
-                                        <p><strong>Label:</strong> ${data.label}</p>
-                                        <p><strong>Spam Probability:</strong> ${(data.spam_probability * 100).toFixed(2)}%</p>`;
+                        const prob = data.spam_probability * 100;
+                        bar.style.width = `${prob}%`;
+                        bar.innerText = `${prob.toFixed(1)}%`;
 
                         if (data.label.includes("SPAM")) {
-                            resDiv.className = 'spam';
+                            resDiv.className = 'res-spam';
+                            verdict.innerText = "🚫 SPAM DETECTED";
+                            verdict.style.color = "var(--spam)";
+                            details.innerText = "This message contains patterns highly typical of spam.";
                         } else {
-                            resDiv.className = 'ham';
+                            resDiv.className = 'res-ham';
+                            verdict.innerText = "✅ LEGITIMATE MAIL";
+                            verdict.style.color = "var(--ham)";
+                            details.innerText = "This message looks safe.";
                         }
                     } else {
-                        resDiv.innerHTML = `<p style="color:red">Error: ${data.message}</p>`;
-                        resDiv.className = '';
+                        alert("Error: " + data.message);
                     }
                 })
                 .catch(err => {
                     console.error(err);
+                    btn.innerHTML = "Analyze Email Content";
+                    btn.disabled = false;
                     alert("Error reaching API");
                 });
         }
