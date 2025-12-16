@@ -1,59 +1,56 @@
 
 # ML Exams Django Project
 
-This project exposes 3 Machine Learning models as APIs with a Graphical Interface.
+Este proyecto expone 3 modelos de Machine Learning como APIs con una Interfaz Gráfica.
 
-## Apps
+## Aplicaciones (Apps)
 
-1. **API 17 (K-Means)**: Fraud Detection.
-   - Uses Mock Data (mimicking `creditcard.csv`).
-   - Inputs: V10, V14.
-   - Output: Cluster ID.
+1. **API 17 (K-Means)**: Detección de Fraude.
+   - Usa Datos Simulados (mock data).
+   - Entradas: V10, V14.
+   - Salida: ID del Cluster.
    - URL: `/17/`
 
-2. **API 18 (DBSCAN)**: Fraud Detection.
-   - Uses Mock Data (mimicking `creditcard.csv`).
-   - Inputs: V10, V14.
-   - Output: Cluster ID (Cluster -1 indicates Noise/Potential Fraud).
+2. **API 18 (DBSCAN)**: Detección de Fraude.
+   - Usa Datos Simulados (mock data).
+   - Entradas: V10, V14.
+   - Salida: ID del Cluster (-1 indica Ruido/Posible Fraude).
    - URL: `/18/`
 
-3. **API 19 (Naive Bayes)**: Spam Detection.
-   - Uses a tiny demonstration corpus (since `trec07p` was missing).
-   - Inputs: Email Text.
-   - Output: SPAM or HAM.
+3. **API 19 (Naive Bayes)**: Detección de Spam.
+   - Usa un corpus pequeño de demostración.
+   - Entradas: Texto del correo.
+   - Salida: SPAM o HAM (Legítimo).
    - URL: `/19/`
 
-## How to Run
+## Cómo ejecutar localmente
 
-1. **Install Dependencies**:
+1. **Instalar Dependencias**:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-   *(Note: `scikit-learn`, `pandas`, `numpy`, `django` are required).*
-
-2. **Run Server**:
+2. **Iniciar el Servidor**:
 
    ```bash
    cd ML_Exams
    python manage.py runserver
    ```
 
-3. **Access APIs**:
-   - Go to `http://127.0.0.1:8000/17/` for K-Means.
-   - Go to `http://127.0.0.1:8000/18/` for DBSCAN.
-   - Go to `http://127.0.0.1:8000/19/` for Naive Bayes.
+3. **Acceder a las APIs**:
+   - Ir a `http://127.0.0.1:8000/17/` para K-Means.
+   - Ir a `http://127.0.0.1:8000/18/` para DBSCAN.
+   - Ir a `http://127.0.0.1:8000/19/` para Naive Bayes.
 
-## Deployment (Vercel)
+## Guía de Despliegue (Vercel)
 
-This project is configured for Vercel.
+El código ya ha sido subido a tu repositorio GitHub.
 
-1. Install Vercel CLI (optional) or connect GitHub to Vercel.
-2. If using CLI:
+1. Ve a tu **[Panel de Vercel](https://vercel.com/dashboard)**.
+2. Haz clic en **"Add New..."** -> **"Project"**.
+3. Importa el repositorio `ExamenesFinales` desde tu GitHub.
+4. Vercel detectará automáticamente la configuración (gracias al archivo `vercel.json`).
+5. Haz clic en **"Deploy"**.
 
-   ```bash
-   vercel
-   ```
-
-3. Should deploy automatically as a Python Serverless Function.
+Tu API estará disponible en unos minutos en `https://tu-proyecto.vercel.app/`.
