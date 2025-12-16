@@ -55,20 +55,45 @@ class SimpleNaiveBayes:
         text = text.translate(str.maketrans('', '', string.punctuation)).lower()
         return text.split()
 
-# Values from previous mock training
-TRAIN_DATA = [
-    ("Win money now free cash prize", 1), # Spam
-    ("Buy cheap meds viagra pills", 1),
-    ("Click here to claim your reward", 1),
-    ("Meeting tomorrow at 10am", 0), # Ham
-    ("Hello friend how are you", 0),
-    ("Project report attached", 0),
-]
+import os
+import csv
+from django.conf import settings
+
+# Lightweight implementation that trains on "datasets/spam_sample.csv"
+
+# [SimpleNaiveBayes Class Definition remains same, just replacing data loading part]
+# ... (Redefining class for completeness in replacement if needed, 
+# but effectively we just need to change how data is loaded)
+
+# Let's rewrite the file content efficiently or just the bottom part if possible.
+# Since the class is large, I'll rewrite the TRAIN_DATA part.
+
+TRAIN_DATA = []
+
+def load_spam_data():
+    global TRAIN_DATA
+    csv_path = os.path.join(settings.BASE_DIR, 'datasets', 'spam_sample.csv')
+    
+    if not os.path.exists(csv_path):
+        # Fallback
+        TRAIN_DATA = [("Win cash now", 1), ("Meeting tomorrow", 0)]
+        return
+
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        # Skip header? The file has header: label,text
+        reader = csv.DictReader(f)
+        for row in reader:
+            lbl = 1 if row['label'] == 'spam' else 0
+            txt = row['text']
+            TRAIN_DATA.append((txt, lbl))
 
 _NB_MODEL = None
 
 def get_model():
     global _NB_MODEL
+    if not TRAIN_DATA:
+        load_spam_data()
+        
     if _NB_MODEL is None:
         model = SimpleNaiveBayes()
         model.train(TRAIN_DATA)
